@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, fields
-from typing import Annotated
+from typing import Annotated, List
+import os
 
 from langchain_core.runnables import ensure_config
 from langgraph.config import get_config
@@ -24,7 +25,7 @@ class Configuration:
     )
 
     model: Annotated[str, {"__template_metadata__": {"kind": "llm"}}] = field(
-        default="anthropic/claude-3-5-sonnet-20240620",
+        default="openai/gpt-4o-mini",
         metadata={
             "description": "The name of the language model to use for the agent's main interactions. "
             "Should be in the form: provider/model-name."
@@ -35,6 +36,38 @@ class Configuration:
         default=10,
         metadata={
             "description": "The maximum number of search results to return for each search query."
+        },
+    )
+
+    # Grafana MCP 相關配置
+    grafana_mcp_url: str = field(
+        default_factory=lambda: os.getenv("GRAFANA_MCP_URL", "http://localhost:8001/sse"),
+        metadata={
+            "description": "The URL of the Grafana MCP server."
+        },
+    )
+
+    grafana_tools: List[str] = field(
+        default_factory=lambda: [
+            'list_loki_label_names',
+            'list_loki_label_values',
+            'query_loki_stats',
+            'search_dashboards',
+            'get_dashboard_by_uid',
+            'update_dashboard',
+            'get_dashboard_panel_queries',
+            'list_datasources',
+            'get_datasource_by_uid',
+            'get_datasource_by_name',
+            'query_prometheus',
+            'list_prometheus_metric_metadata',
+            'list_prometheus_metric_names',
+            'list_prometheus_label_names',
+            'list_prometheus_label_values',
+            'query_loki_logs',
+        ],
+        metadata={
+            "description": "List of Grafana MCP tools to use."
         },
     )
 
