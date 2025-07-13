@@ -8,6 +8,8 @@ from typing import Any, Callable, List, Optional, cast
 import asyncio
 import logging
 
+from langgraph.types import Command, interrupt
+
 from langchain_tavily import TavilySearch  # type: ignore[import-not-found]
 from langchain_mcp_adapters.client import MultiServerMCPClient
 
@@ -44,6 +46,42 @@ def think(thought: str) -> Optional[dict[str, Any]]:
     """
     return thought
 
+def incrementCounterWithConfirm(reason: str, amount: int) -> dict[str, Any]:
+    """
+    增加計數器，並且需要使用者確認
+    使用 LangGraph 的 interrupt 機制來暫停執行，等待用戶確認
+    :param reason: 使用者想要增加的原因
+    :param amount: 使用者想要增加多少
+    :return: 包含執行結果的字典
+    """
+    # 使用 interrupt 暫停執行，並提供確認信息給前端
+    user_input = interrupt({
+        "tool_name": "incrementCounterWithConfirm",
+        "action": "increment_counter",
+        "reason": reason,
+        "amount": amount,
+        "message": f"請確認是否要增加計數器 {amount} 次？原因：{reason}",
+        "ui_action": "show_counter_increment_dialog",
+        "requires_confirmation": True
+    })
+    
+    if user_input and user_input.get("approved"):
+        return {
+            "success": True,
+            "action": "increment_counter",
+            "amount": amount,
+            "reason": reason,
+            "user_input": user_input,
+            "message": f"計數器已成功增加 {amount} 次"
+        }
+    else:
+        return {
+            "success": False,
+            "action": "cancelled",
+            "user_input": user_input,
+            "reason": user_input.get("reason", "用戶取消操作") if user_input else "用戶取消操作",
+            "message": "計數器增加操作已取消"
+        }
 
 async def get_mcp_client() -> MultiServerMCPClient:
     """Get or create the MCP client."""
@@ -86,7 +124,7 @@ async def get_mcp_tools() -> List[Callable[..., Any]]:
 async def get_all_tools() -> List[Callable[..., Any]]:
     """Get all available tools (both MCP and search)."""
     mcp_tools = await get_mcp_tools()
-    return [search, think] + mcp_tools
+    return [search, think, incrementCounterWithConfirm] + mcp_tools
 
 
 def parse_messages(messages: List[Any]) -> None:
@@ -159,4 +197,4 @@ def parse_messages(messages: List[Any]) -> None:
 
 # 為了兼容性，我們需要在模組級別提供 TOOLS
 # 但由於 MCP 工具需要異步初始化，我們提供一個空列表作為佔位符
-TOOLS: List[Callable[..., Any]] = [search]
+TOOLS: List[Callable[..., Any]] = [search, think, incrementCounterWithConfirm]
