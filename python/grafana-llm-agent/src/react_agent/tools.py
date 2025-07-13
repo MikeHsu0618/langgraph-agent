@@ -64,8 +64,8 @@ def incrementCounterWithConfirm(reason: str, amount: int) -> dict[str, Any]:
         "ui_action": "show_counter_increment_dialog",
         "requires_confirmation": True
     })
-    
-    if user_input and user_input.get("approved"):
+    print(user_input)
+    if user_input == "yes":
         return {
             "success": True,
             "action": "increment_counter",
