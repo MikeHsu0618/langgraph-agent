@@ -32,6 +32,18 @@ async def search(query: str) -> Optional[dict[str, Any]]:
     wrapped = TavilySearch(max_results=configuration.max_search_results)
     return cast(dict[str, Any], await wrapped.ainvoke({"query": query}))
 
+def think(thought: str) -> Optional[dict[str, Any]]:
+    """Use the tool to think about something.
+           This is perfect to start your workflow.
+           It will not obtain new information or take any actions, but just append the thought to the log and return the result.
+           Use it when complex reasoning or some cache memory or a scratchpad is needed.
+
+
+           :param thought: A thought to think about and log.
+           :return: The full log of thoughts and the new thought.
+    """
+    return thought
+
 
 async def get_mcp_client() -> MultiServerMCPClient:
     """Get or create the MCP client."""
@@ -74,7 +86,7 @@ async def get_mcp_tools() -> List[Callable[..., Any]]:
 async def get_all_tools() -> List[Callable[..., Any]]:
     """Get all available tools (both MCP and search)."""
     mcp_tools = await get_mcp_tools()
-    return [search] + mcp_tools
+    return [search, think] + mcp_tools
 
 
 def parse_messages(messages: List[Any]) -> None:
