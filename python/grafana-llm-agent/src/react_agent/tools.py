@@ -64,8 +64,20 @@ def incrementCounterWithConfirm(reason: str, amount: int) -> dict[str, Any]:
         "ui_action": "show_counter_increment_dialog",
         "requires_confirmation": True
     })
-    print(user_input)
-    if user_input == "yes":
+    print("用戶輸入:", user_input)
+    
+    # 根據官方文件，當有多個 interrupt 時，resume 的格式是 {interrupt_id: value}
+    # 我們需要從中提取實際的用戶輸入值
+    print("user_input", user_input)
+    actual_input = user_input
+    if isinstance(user_input, dict) and len(user_input) == 1:
+        # 如果是 {interrupt_id: value} 格式，提取 value
+        actual_input = next(iter(user_input.values()))
+    
+    print("實際輸入:", actual_input)
+    
+    # 檢查用戶是否確認
+    if actual_input is True or actual_input == "yes" or actual_input == "true":
         return {
             "success": True,
             "action": "increment_counter",
@@ -79,7 +91,7 @@ def incrementCounterWithConfirm(reason: str, amount: int) -> dict[str, Any]:
             "success": False,
             "action": "cancelled",
             "user_input": user_input,
-            "reason": user_input.get("reason", "用戶取消操作") if user_input else "用戶取消操作",
+            "reason": "用戶取消操作",
             "message": "計數器增加操作已取消"
         }
 
